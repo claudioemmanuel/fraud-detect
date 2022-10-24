@@ -4,7 +4,9 @@
 - [Laravel](https://laravel.com/)
 #### para executar a aplicação sera necessário o [Composer](https://getcomposer.org/download/) e [Docker](https://docs.docker.com/engine/install/)
 
-## 🎴 Preparação do projeto
+## 🎴 Preparação do projetos 
+
+É de grande importancia que todos os passos sejam seguidos corretamente em sua ordem para funcionamento do projeto
 
 ```bash
 git clone https://github.com/claudioemmanuel/fraud-detect-api.git
@@ -15,7 +17,7 @@ cd fraud-detect-api
 ```bash
 cp .env.example .env
 ```
-Altere as variáveis de ambiente do arquivo .env criado no passo anterior para
+Altere as variáveis de ambiente do arquivo .env criado no passo anterior para os valores abaixo
 ```bash
 DB_CONNECTION=mysql
 DB_HOST=mysql
@@ -24,7 +26,7 @@ DB_DATABASE=stark_industries
 DB_USERNAME=root
 DB_PASSWORD=
 ```
-No projeto foi utilizado o Laravel Sail (para container), execute o comando abaixo para instalação das dependências
+No projeto foi utilizado o Laravel Sail (para container), na pasta do projeto execute o comando abaixo para instalação das dependências
 ```bash
 docker run --rm \
     -u "$(id -u):$(id -g)" \

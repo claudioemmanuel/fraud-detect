@@ -1,66 +1,111 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
 
-<p align="center">
-<a href="https://travis-ci.org/laravel/framework"><img src="https://travis-ci.org/laravel/framework.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+## 🖥 Tecnologias 
+#### `Back-end`
+- [Laravel](https://laravel.com/)
+#### para executar a aplicação sera necessário o [Composer](https://getcomposer.org/download/) e [Docker](https://docs.docker.com/engine/install/)
 
-## About Laravel
+## 🎴 Preparação do projeto
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+```bash
+git clone https://github.com/claudioemmanuel/fraud-detect-api.git
+```
+```bash
+cd fraud-detect-api 
+```
+```bash
+cp .env.example .env
+```
+Altere as variáveis de ambiente do arquivo .env criado no passo anterior para
+```bash
+DB_CONNECTION=mysql
+DB_HOST=mysql
+DB_PORT=3306
+DB_DATABASE=stark_industries
+DB_USERNAME=root
+DB_PASSWORD=
+```
+No projeto foi utilizado o Laravel Sail (para container), execute o comando abaixo para instalação das dependências
+```bash
+docker run --rm \
+    -u "$(id -u):$(id -g)" \
+    -v $(pwd):/var/www/html \
+    -w /var/www/html \
+    laravelsail/php81-composer:latest \
+    composer install --ignore-platform-reqs
+```
+Em seguida suba o container
+```bash
+docker-compose up
+```
+Entre no container
+```bash
+docker exec -it fraud-detect-api_laravel_1 bash
+```
+Execute o comando abaixo para gerar a key da aplicação 
+```bash
+php artisan key:generate
+```
+Crie o DB em seu gerenciador de banco
+```bash
+create database stark_industries
+```
+Dentro do container execute o comando abaixo para popular o banco com as informações 
+```bash
+php artisan migrate:fresh --seed 
+```
+O projeto estara rodando no endereço http://0.0.0.0:80 / http://0.0.0.0/
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## 🔗 Rotas de view
+#### / - listagem da tela de criação dos clientes
+#### /sales - listagem de clientes cadastrados
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## 🔗 Rotas da API
+#### GET /validate-cpf/{cpf} - para validação do cpf durante o cadastro do cliente
+#### POST /store-client - para criação do usuário
+```bash
+[
+    'name' => 'required|string',
+    'birth_date' => 'required|date',
+    'rg' => 'required|string',
+    'cpf' => 'required|string',
+    'streetName' => 'required|string',
+    'buildingNumber' => 'required|string',
+    'neighborhood' => 'required|string',
+    'city' => 'required|string',
+    'state' => 'required|string',
+    'postcode' => 'required|string',
+    'profile_photo_path' => 'required',
+];
+```
+#### POST /init-sale - para iniciar uma venda para um cliente
+```bash
+[
+    'client.id' => 'required|integer',
+    'client.name' => 'required|string',
+    'client.birth_date' => 'required|date',
+    'client.rg' => 'required|string',
+    'client.cpf' => 'required|string',
+    'client.streetName' => 'required|string',
+    'client.buildingNumber' => 'required|string',
+    'client.neighborhood' => 'required|string',
+    'client.city' => 'required|string',
+    'client.state' => 'required|string',
+    'client.postcode' => 'required|string',
+];
+```
 
-## Learning Laravel
+## ✨ Teste de fraude
+**Regra**: Os  produtos  da  Stark  Industries  só  podem  ser  vendidos  para  adultos  maiores  de  21  anos  
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+**O problema**: Pessoas  fora  dessa  idade  tem  adulterado documentos  para  tentar  realiza  a  compra  de  seus  produtos
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+**Solução**: Com base na regra informada foi desenvolvido a uma lógica na qual faço o cruzamento das informações de *CPF* com  a *nascimento do cliente*  já que está havendo fraude de documentação. 
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains over 2000 video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+**A ideia foi construir uma *"fake api"* simulando o que seria uma consulta a base da receita federal** que, ao executar as seeds para criar os clientes ele já alimenta esta base para utilizarmos no teste, alguns deles já podem iniciar uma compra e outros já estão sendo barrados pela idade conforme manda a regra, a lógica para criação destes clientes você entra no arquivo **ClientFactory**. No arquivo ***ClientService*** na linha ***47*** foi deixado o comentário *de propósito* para que seja visualizado que *seria possível barrar o cadastro de um cliente com o mesmo CPF já existente, também será possível barrar incluindo na migration de cliente a informação de que CPF seja único*, porém desta forma **não haveria como ser feito o teste de fraude**.
 
-## Laravel Sponsors
+**O teste**: Faça o cadastro de um novo cliente com o CPF de um cliente já existente e que tenha os requisitos para iniciar uma compra, no caso, ter mais de 21 anos (rota */sales* para listagem). Ao cadastrar este novo cliente, vá para a listagem (*/sales*) e tente iniciar uma venda para ele, você não deverá conseguir pois o cliente é um possível fraudador pois o CPF informado por ele no cadastro cruzado com as informações do banco da "*fake api*" aponta para outra pessoa.  A ideia foi simular o que seria uma consulta a uma API da receita federal para cruzar os dados. Poderia ser feito diversos testes cruzando as informações de quem está comprando com o verdadeiro cliente, porém foi implementado como exemplo apenas o cruzamento do CPF com a data de nascimento, caso o fraudador possuir todos os dados, não há como impedir a fraude neste teste.
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the Laravel [Patreon page](https://patreon.com/taylorotwell).
+## 📙 Licença
+> Com base nos termos de [MIT LICENSE](https://opensource.org/licenses/MIT)
 
-### Premium Partners
-
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Cubet Techno Labs](https://cubettech.com)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[Many](https://www.many.co.uk)**
-- **[Webdock, Fast VPS Hosting](https://www.webdock.io/en)**
-- **[DevSquad](https://devsquad.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[OP.GG](https://op.gg)**
-- **[WebReinvent](https://webreinvent.com/?utm_source=laravel&utm_medium=github&utm_campaign=patreon-sponsors)**
-- **[Lendio](https://lendio.com)**
-
-## Contributing
-
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
-
-## Code of Conduct
-
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
-
-## Security Vulnerabilities
-
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+##### Feito por Claudio Emmanuel com ❤️

@@ -57,55 +57,16 @@ php artisan migrate:fresh --seed
 ```
 O projeto estara rodando no endereço http://0.0.0.0:80 / http://0.0.0.0/
 
-## 🔗 Rotas de view
-#### / - listagem da tela de criação dos clientes
-#### /sales - listagem de clientes cadastrados
-
-## 🔗 Rotas da API
-#### GET /validate-cpf/{cpf} - para validação do cpf durante o cadastro do cliente
-#### POST /store-client - para criação do usuário
-```bash
-[
-    'name' => 'required|string',
-    'birth_date' => 'required|date',
-    'rg' => 'required|string',
-    'cpf' => 'required|string',
-    'streetName' => 'required|string',
-    'buildingNumber' => 'required|string',
-    'neighborhood' => 'required|string',
-    'city' => 'required|string',
-    'state' => 'required|string',
-    'postcode' => 'required|string',
-    'profile_photo_path' => 'required',
-];
-```
-#### POST /init-sale - para iniciar uma venda para um cliente
-```bash
-[
-    'client.id' => 'required|integer',
-    'client.name' => 'required|string',
-    'client.birth_date' => 'required|date',
-    'client.rg' => 'required|string',
-    'client.cpf' => 'required|string',
-    'client.streetName' => 'required|string',
-    'client.buildingNumber' => 'required|string',
-    'client.neighborhood' => 'required|string',
-    'client.city' => 'required|string',
-    'client.state' => 'required|string',
-    'client.postcode' => 'required|string',
-];
-```
-
 ## ✨ Teste de fraude
 **Regra**: Os  produtos  da  Stark  Industries  só  podem  ser  vendidos  para  adultos  maiores  de  21  anos  
 
 **O problema**: Pessoas  fora  dessa  idade  tem  adulterado documentos  para  tentar  realiza  a  compra  de  seus  produtos
 
-**Solução**: Com base na regra informada foi desenvolvido a uma lógica na qual faço o cruzamento das informações de *CPF* com  a *nascimento do cliente*  já que está havendo fraude de documentação. 
+**Solução**: Com base na regra informada foi desenvolvido a uma lógica na qual faço o cruzamento das informações de *CPF* com a *data de nascimento do cliente* já que está havendo fraude de documentação. A regra de negócio exigida pelo teste se encontra nos arquivos ClientFactory e SaleService.
 
-**A ideia foi construir uma *"fake api"* simulando o que seria uma consulta a base da receita federal** que, ao executar as seeds para criar os clientes ele já alimenta esta base para utilizarmos no teste, alguns deles já podem iniciar uma compra e outros já estão sendo barrados pela idade conforme manda a regra, a lógica para criação destes clientes você entra no arquivo **ClientFactory**. No arquivo ***ClientService*** na linha ***47*** foi deixado o comentário *de propósito* para que seja visualizado que *seria possível barrar o cadastro de um cliente com o mesmo CPF já existente, também será possível barrar incluindo na migration de cliente a informação de que CPF seja único*, porém desta forma **não haveria como ser feito o teste de fraude**.
+**A ideia foi construir uma *"fake api"* simulando o que seria uma consulta a base da receita federal** que, ao executar a seed para popular o banco, ela já alimenta um arquivo json para utilizarmos no teste que servirá como nossa consulta a "receita federal". Alguns dos clientes cadastrados pela seed já podem iniciar uma compra e outros já estão sendo barrados pela idade conforme manda a regra. No arquivo ***ClientService*** na linha ***47*** foi deixado o comentário *de propósito* para que seja visualizado que *seria possível barrar o cadastro de um cliente com o mesmo CPF já existente, também seria possível barrar incluindo na migration de cliente a informação de que CPF é único*, porém desta forma **não haveria como ser feito o teste de fraude**.
 
-**O teste**: Faça o cadastro de um novo cliente com o CPF de um cliente já existente e que tenha os requisitos para iniciar uma compra, no caso, ter mais de 21 anos (rota */sales* para listagem). Ao cadastrar este novo cliente, vá para a listagem (*/sales*) e tente iniciar uma venda para ele, você não deverá conseguir pois o cliente é um possível fraudador pois o CPF informado por ele no cadastro cruzado com as informações do banco da "*fake api*" aponta para outra pessoa.  A ideia foi simular o que seria uma consulta a uma API da receita federal para cruzar os dados. Poderia ser feito diversos testes cruzando as informações de quem está comprando com o verdadeiro cliente, porém foi implementado como exemplo apenas o cruzamento do CPF com a data de nascimento, caso o fraudador possuir todos os dados, não há como impedir a fraude neste teste.
+**O teste**: Faça o cadastro de um novo cliente com o CPF de um cliente já existente e que tenha os requisitos para iniciar uma compra, no caso, ter mais de 21 anos (rota */sales* para listagem). Ao cadastrar este novo cliente tente iniciar uma venda para ele, você não deverá conseguir pois o cliente é um possível fraudador pois o CPF informado por ele cruzado com as informações do banco da "*fake api*" (arquivo json criado ao executar a seed) aponta para outra pessoa. Poderia ser feito diversos testes cruzando as informações de quem está comprando com o verdadeiro cliente, porém foi implementado como exemplo apenas o cruzamento do CPF com a data de nascimento.
 
 ## 📙 Licença
 > Com base nos termos de [MIT LICENSE](https://opensource.org/licenses/MIT)

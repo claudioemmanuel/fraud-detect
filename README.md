@@ -47,10 +47,6 @@ Execute o comando abaixo para gerar a key da aplicação
 ```bash
 php artisan key:generate
 ```
-Crie o DB em seu gerenciador de banco
-```bash
-create database stark_industries
-```
 Dentro do container execute o comando abaixo para popular o banco com as informações 
 ```bash
 php artisan migrate:fresh --seed 
